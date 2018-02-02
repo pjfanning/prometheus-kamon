@@ -32,8 +32,8 @@ object PrometheusMetricRegistry {
     gauges.getOrElseUpdate(name, createGauge)
   }
 
-  def getHistogram(name: String, labelNames: Seq[String]): MetricDistributionCollector = {
-    def createHistogram = new MetricDistributionCollector(name, labelNames, collectorRegistry)
+  def getHistogram(name: String, labelNames: Seq[String], help: String): MetricDistributionCollector = {
+    def createHistogram = new MetricDistributionCollector(name, labelNames, help, collectorRegistry)
     histograms.getOrElseUpdate(name, createHistogram)
   }
 }

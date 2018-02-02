@@ -19,7 +19,7 @@ import java.util
 import io.prometheus.client.Collector.MetricFamilySamples
 import io.prometheus.client.{Collector, CollectorRegistry}
 
-class MetricDistributionCollector(name: String, labelNames: Seq[String],
+class MetricDistributionCollector(name: String, labelNames: Seq[String], help: String,
                                   collectorRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry) extends Collector {
   this.register(collectorRegistry)
 
@@ -30,7 +30,7 @@ class MetricDistributionCollector(name: String, labelNames: Seq[String],
   }
 
   override def collect(): util.List[MetricFamilySamples] = {
-    val mfs = new Collector.MetricFamilySamples(name, Collector.Type.HISTOGRAM, "histogram", samples)
+    val mfs = new Collector.MetricFamilySamples(name, Collector.Type.HISTOGRAM, help, samples)
     util.Collections.singletonList(mfs)
   }
 }
