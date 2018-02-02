@@ -8,7 +8,7 @@ object PrometheusMetricRegistry {
 
   private val collectorRegistry = CollectorRegistry.defaultRegistry
   private val gauges = TrieMap[String, Gauge]()
-  private val histograms = TrieMap[String, Histogram]()
+  private val histograms = TrieMap[String, MetricDistributionCollector]()
 
   def getGauge(name: String, labelNames: Seq[String], metricType: Collector.Type): Gauge = {
     def createGauge = {
@@ -18,9 +18,8 @@ object PrometheusMetricRegistry {
     gauges.getOrElseUpdate(name, createGauge)
   }
 
-  def getHistogram(name: String, labelNames: List[String], buckets: Double*): Histogram = {
-    def createHistogram =
-      Histogram.build().name(name).labelNames(labelNames.map(_.toString): _*).buckets(buckets: _*).register(collectorRegistry)
+  def getHistogram(name: String, labelNames: Seq[String]): MetricDistributionCollector = {
+    def createHistogram = new MetricDistributionCollector(name, labelNames, collectorRegistry)
     histograms.getOrElseUpdate(name, createHistogram)
   }
 }
