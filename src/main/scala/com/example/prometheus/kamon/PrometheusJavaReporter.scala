@@ -72,7 +72,7 @@ class PrometheusJavaReporter extends MetricReporter {
     }
   }
 
-  private def normalizeUnit: String = unit.dimension match  {
+  private def normalizeUnit(unit: MeasurementUnit): String = unit.dimension match  {
     case Time         => "seconds"
     case Information  => "bytes"
     case _            => ""
@@ -117,7 +117,7 @@ class PrometheusJavaReporter extends MetricReporter {
         samples.add(
           new MetricFamilySamples.Sample(s"${normalizedMetricName}_sum", labelNamesList.asJava,
             labelValuesList, sum))
-        val collector = PrometheusMetricRegistry.getHistogram(normalizedMetricName, labelNamesList, normalizeUnit)
+        val collector = PrometheusMetricRegistry.getHistogram(normalizedMetricName, labelNamesList, normalizeUnit(unit))
         collector.setSamples(samples)
       }
     })

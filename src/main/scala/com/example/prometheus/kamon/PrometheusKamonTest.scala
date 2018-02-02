@@ -36,7 +36,7 @@ object PrometheusKamonTest extends App {
   Kamon.addReporter(new PrometheusJavaReporter)
   sys.addShutdownHook(Kamon.stopAllReporters())
 
-  val counter = Kamon.counter("kamon-test-counter")
+  val counter = Kamon.counter("kamon-test-counter").refine("tag" -> "value")
   counter.increment(10)
   val gauge = Kamon.gauge("kamon-test-gauge")
   gauge.set(100)

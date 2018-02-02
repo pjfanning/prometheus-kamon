@@ -16,24 +16,25 @@ package com.example.prometheus.kamon
 
 import scala.collection.concurrent.TrieMap
 
-import io.prometheus.client.{Collector, CollectorRegistry, Gauge, Histogram}
+import io.prometheus.client.{Collector, CollectorRegistry, Gauge}
 
 object PrometheusMetricRegistry {
 
+  private case class MetricKey(name: String, labelNames: Seq[String])
   private val collectorRegistry = CollectorRegistry.defaultRegistry
-  private val gauges = TrieMap[String, Gauge]()
-  private val histograms = TrieMap[String, MetricDistributionCollector]()
+  private val gauges = TrieMap[MetricKey, Gauge]()
+  private val histograms = TrieMap[MetricKey, MetricDistributionCollector]()
 
   def getGauge(name: String, labelNames: Seq[String], metricType: Collector.Type): Gauge = {
     def createGauge = {
       def typeText = if(metricType == Collector.Type.COUNTER) "counter" else "gauge"
       Gauge.build().name(name).help(typeText).labelNames(labelNames: _*).register(collectorRegistry)
     }
-    gauges.getOrElseUpdate(name, createGauge)
+    gauges.getOrElseUpdate(MetricKey(name, labelNames), createGauge)
   }
 
   def getHistogram(name: String, labelNames: Seq[String], help: String): MetricDistributionCollector = {
     def createHistogram = new MetricDistributionCollector(name, labelNames, help, collectorRegistry)
-    histograms.getOrElseUpdate(name, createHistogram)
+    histograms.getOrElseUpdate(MetricKey(name, labelNames), createHistogram)
   }
 }
