@@ -1,14 +1,26 @@
+/* =========================================================================================
+ * Copyright © 2018 PJ Fanning
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ * =========================================================================================
+ */
 package com.example.prometheus.kamon
 
-import java.util.concurrent.ThreadPoolExecutor.AbortPolicy
 import java.util.concurrent._
+import java.util.concurrent.ThreadPoolExecutor.AbortPolicy
 
-import scala.concurrent.{ Promise, Future }
 import scala.concurrent.duration.FiniteDuration
 import scala.language.implicitConversions
-import scala.util.Try
 
-// https://gist.github.com/platy/8f0e634c64d9fb54559c
+// based on https://gist.github.com/platy/8f0e634c64d9fb54559c
 object ScheduledExecutor {
   private val defaultHandler: RejectedExecutionHandler = new AbortPolicy
 }
@@ -31,66 +43,9 @@ class ScheduledExecutor(corePoolSize: Int,
 
   private val underlying: ScheduledExecutorService = new ScheduledThreadPoolExecutor(corePoolSize, threadFactory, handler)
 
-  /**
-    * Creates a Future and schedules the operation to run after the given delay.
-    *
-    * @param operation to execute
-    * @param by the time from now to delay execution
-    * @tparam T the type of the operation's result
-    * @return a Future that can be used to extract result
-    * @throws RejectedExecutionException if the task cannot be
-    *                                    scheduled for execution
-    */
-  def delayExecution[T](operation: ⇒ T)(by: FiniteDuration): CancellableFuture[T] = {
-    val promise = Promise[T]()
-    val scheduledFuture: ScheduledFuture[_] = underlying.schedule(new Runnable {
-      override def run() = {
-        promise.complete(Try(operation))
-      }
-    }, by.length, by.unit)
-    new DelegatingCancellableFuture(promise.future, scheduledFuture.cancel)
-  }
-
   def scheduleAtFixedRate(operation: ⇒ Unit)(interval: FiniteDuration): Unit = {
     underlying.scheduleAtFixedRate(new Runnable {
       override def run() = operation
     }, interval.length, interval.length, interval.unit)
   }
-}
-
-object CancellableFuture {
-  implicit def extractFuture[T](cf: CancellableFuture[T]): Future[T] = cf.future
-}
-
-/**
-  * Wraps a future, adding a method to cancel it
-  * @tparam T
-  */
-trait CancellableFuture[T] {
-  def future: Future[T]
-
-  /**
-    * Attempts to cancel execution of this task.  This attempt will
-    * fail if the task has already completed, has already been cancelled,
-    * or could not be cancelled for some other reason. If successful,
-    * and this task has not started when {@code cancel} is called,
-    * this task should never run.  If the task has already started,
-    * then the {@code mayInterruptIfRunning} parameter determines
-    * whether the thread executing this task should be interrupted in
-    * an attempt to stop the task.
-    *
-    * <p>If this method returns true, the future should never complete.
-    *
-    * @param mayInterruptIfRunning { @code true} if the thread executing this
-    *                                      task should be interrupted; otherwise, in-progress tasks are allowed
-    *                                      to complete
-    * @return { @code false} if the task could not be cancelled,
-    *                 typically because it has already completed normally;
-    *                 { @code true} otherwise
-    */
-  def cancel(mayInterruptIfRunning: Boolean): Boolean
-}
-
-private class DelegatingCancellableFuture[T](val future: Future[T], cancelMethod: (Boolean) ⇒ Boolean) extends CancellableFuture[T] {
-  def cancel(interruptIfRunning: Boolean): Boolean = cancelMethod(interruptIfRunning)
 }
