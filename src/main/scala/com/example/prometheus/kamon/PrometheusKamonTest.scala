@@ -43,6 +43,9 @@ object PrometheusKamonTest extends App {
   val hist = Kamon.histogram("kamon-test-histogram")
   hist.record(1000)
   hist.record(1000 * 1000)
+  val timer = Kamon.timer("kamon-test-timer")
+  timer.record(1000)
+  timer.record(1000 * 1000)
 
   val executor = new ScheduledExecutor(1)
   executor.scheduleAtFixedRate(logPrometheusMetrics)(10.seconds)
